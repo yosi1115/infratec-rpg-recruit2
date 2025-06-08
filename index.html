@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>インフラテック王国 冒険の書 Ver.7.2 - 新卒採用情報 -</title>
+    <title>インフラテック王国 冒険の書 Ver.7.3 - 新卒採用情報 -</title>
     <!--
-        Update Log Ver.7.2 (2025/06/08)
-        - New Feature: Added an interactive story element in Scene 6 to guide users to the official Instagram account.
-        - Storytelling: Introduced a "Bard" character to naturally present the Instagram feed as a "picture story" of the kingdom's daily life.
-        - UI/UX: Implemented a choice-based button system to either visit Instagram or proceed to the next scene, enhancing user agency.
+        Update Log Ver.7.3 (2025/06/08)
+        - Data Correction: Corrected sales and employee figures based on user feedback to accurately reflect the 2024 data from the source MyNavi page.
+        - Text Correction: Updated the date reference in Scene 2 to "(2024年9月期)" to match the corrected data.
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -129,7 +128,7 @@
                 セメントにガラス繊維を混ぜて補強したコンクリート。従来のコンクリートより「軽くて丈夫」、そして「自由な形に加工しやすい」という特徴があります。建物の外壁や装飾、さらにはモニュメントなど、幅広い用途で活躍する魔法のような素材です！✨
                 </p>
             </div>
-            <p>王国の経済規模はグループ全体で売上高<strong class="text-xl" id="salesValue">0億円</strong>💰、そして<strong class="text-xl" id="employeeCount">0名</strong>（2023年9月時点）の民がこの広大な王国で日夜、その技を振るっている。🧑‍🤝‍🧑</p>
+            <p>王国の経済規模はグループ全体で売上高<strong class="text-xl" id="salesValue">0億円</strong>💰、そして<strong class="text-xl" id="employeeCount">0名</strong>（2024年9月期）の民がこの広大な王国で日夜、その技を振るっている。🧑‍🤝‍🧑</p>
             <div class="action-buttons">
                 <button class="next-button" onclick="showScene('scene3')">冒険者ギルドへ ➡️</button>
             </div>
@@ -325,8 +324,8 @@
     let musicStarted = false;
 
     const kingdomData = {
-        sales: 409,
-        employees: 1162,
+        sales: 394,
+        employees: 1145,
         salary: { g: 259463, u: 248594, j: 234025 },
         workLife: { holidays: 125, overtime: 6.9, paidLeave: 11.2 }
     };
