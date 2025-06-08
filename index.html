@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インフラテック王国 冒険の書 Ver.7.2 - 新卒採用情報 -</title>
+    <!--
+        Update Log Ver.7.2 (2025/06/08)
+        - New Feature: Added an interactive story element in Scene 6 to guide users to the official Instagram account.
+        - Storytelling: Introduced a "Bard" character to naturally present the Instagram feed as a "picture story" of the kingdom's daily life.
+        - UI/UX: Implemented a choice-based button system to either visit Instagram or proceed to the next scene, enhancing user agency.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #2c3e50; color: #ecf0f1; overflow-x: hidden; margin: 0; }
+       .game-font { font-family: 'DotGothic16', sans-serif; }
+       .scene { display: none; min-height: 100vh; padding: 20px; box-sizing: border-box; background-size: cover; background-position: center center; background-repeat: no-repeat; position: relative; }
+       .scene::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); z-index: 0; }
+       .scene.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+       .dialogue-box, .progress-bar-container, .action-buttons, .music-controls { position: relative; z-index: 1; }
+       .dialogue-box { background-color: rgba(0, 0, 0, 0.82); border: 3px solid #7f8c8d; border-radius: 12px; padding: 25px; margin-top: 20px; width: 90%; max-width: 800px; box-shadow: 0 0 20px rgba(241, 196, 15, 0.3); }
+       .dialogue-box h2 { font-family: 'DotGothic16', sans-serif; color: #f1c40f; margin-bottom: 18px; font-size: 2em; text-shadow: 1px 1px 2px #000; }
+       .dialogue-box p,.dialogue-box li { font-size: 1.15em; line-height: 1.8; margin-bottom: 12px; }
+       .dialogue-box strong { color: #3498db; font-weight: bold; }
+        .action-buttons { margin-top: 20px; text-align: center; }
+       .next-button,.choice-button, .detail-button, .control-button { font-family: 'DotGothic16', sans-serif; background-color: #e74c3c; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s, transform 0.1s; box-shadow: 0 3px #c0392b; margin: 5px; display: inline-block; text-decoration: none; }
+        .next-button:active, .choice-button:active, .detail-button:active, .control-button:active { transform: translateY(1px); box-shadow: 0 2px #c0392b; }
+       .next-button:hover,.choice-button:hover, .detail-button:hover, .control-button:hover { background-color: #c0392b; }
+       .choice-button { background-color: #2980b9; box-shadow: 0 3px #2471a3; }
+       .choice-button:active { transform: translateY(1px); box-shadow: 0 2px #2471a3; }
+       .choice-button:hover { background-color: #2471a3; }
+       .detail-button { background-color: #f39c12; box-shadow: 0 3px #d35400; font-size: 0.9em; padding: 6px 12px; margin-left: 8px; }
+       .detail-button:hover { background-color: #e67e22; }
+       .detail-content { background-color: rgba(52, 73, 94, 0.95); border: 1px solid #f1c40f; border-radius: 6px; padding: 15px; margin-top: 10px; font-size: 0.95em; line-height: 1.6; color: #ecf0f1; }
+       .detail-content strong { color: #f39c12; }
+       .progress-bar-container { width: 80%; max-width: 600px; background-color: #566573; border-radius: 8px; margin: 20px auto 0; height: 25px; overflow: hidden; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; border: 2px solid #7f8c8d; }
+       .progress-bar { width: 0%; height: 100%; background-color: #2ecc71; transition: width 0.5s ease-in-out; text-align: center; line-height:25px; color: #2c3e50; font-size: 0.9em; font-weight: bold; }
+       .item-list li { background-color: rgba(255,255,255,0.08); padding: 10px; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #f1c40f; }
+       .item-list strong { color: #f39c12; }
+       .fade-in { animation: fadeInAnimation 0.7s ease-out forwards; }
+        @keyframes fadeInAnimation { 0% { opacity: 0; transform: translateY(25px); } 100% { opacity: 1; transform: translateY(0); } }
+        .choice-reaction-text { color: #f1c40f; margin-top: 15px; font-style: italic; }
+        .music-controls { position: fixed; bottom: 15px; right: 15px; background-color: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; z-index: 1001; }
+        .music-controls button, .music-controls input[type="range"] { font-size: 0.9em; padding: 6px 10px; }
+        .music-controls input[type="range"] { width: 80px; cursor: pointer; }
+        .control-button { background-color: #1abc9c; box-shadow: 0 3px #16a085; }
+        .control-button:hover { background-color: #16a085; }
+        .control-button:active { box-shadow: 0 2px #16a085; }
+        #scene0 { background-image: url('https://i.imgur.com/tpu6jOl.png'); }
+        #scene1 { background-image: url('https://i.imgur.com/tpu6jOl.png'); }
+        #scene2 { background-image: url('https://i.imgur.com/03FIOHn.png'); }
+        #scene3 { background-image: url('https://i.imgur.com/6IQpxb3.png'); }
+        #scene4 { background-image: url('https://i.imgur.com/U4uF6oW.png'); }
+        #scene5 { background-image: url('https://i.imgur.com/ULPykNw.png'); }
+        #scene6 { background-image: url('https://i.imgur.com/BHXIrlI.png'); }
+        #scene7 { background-image: url('https://i.imgur.com/WMHhLiQ.png'); }
+        #scene8 { background-image: url('https://i.imgur.com/P3TsRTT.png'); }
+        .quiz-container { background-color: rgba(0,0,0,0.7); border: 2px solid #f1c40f; padding: 20px; border-radius: 10px; margin-top: 15px; text-align: left; }
+        .quiz-feedback { margin-top: 15px; font-size: 1.1em; padding: 10px; border-radius: 5px; }
+        .quiz-feedback.correct { color: #2ecc71; border: 1px solid #2ecc71; }
+        .quiz-feedback.incorrect { color: #e74c3c; border: 1px solid #e74c3c; }
+        .quiz-container button { width: 100%; text-align: left; margin-bottom: 8px; background-color: #34495e; box-shadow: 0 3px #2c3e50;}
+        .quiz-container button:hover { background-color: #566573; }
+        .quiz-container button:active { transform: translateY(1px); box-shadow: 0 2px #2c3e50; }
+        .bard-story { border-top: 2px dashed #7f8c8d; margin-top: 25px; padding-top: 25px; }
+    </style>
+</head>
+<body>
+
+    <div class="progress-bar-container">
+        <div id="progressBar" class="progress-bar game-font">冒険の準備中...</div>
+    </div>
+
+    <div class="music-controls">
+        <button id="playPauseButton" class="control-button game-font">▶️</button>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
+    </div>
+
+    <audio id="backgroundMusic" loop>
+      <source src="./Music_fx_.mp3" type="audio/mpeg">
+      お使いのブラウザは音声再生に対応していません。
+    </audio>
+
+    <div id="scene0" class="scene active fade-in">
+        <div class="dialogue-box">
+            <h2 class="game-font">冒険の書を開く... 📖</h2>
+            <p>まもなくインフラテック王国への旅が始まります。</p>
+            <p class="text-yellow-300">この先、音楽が再生されますので音量にご注意ください。 🔊</p>
+            <p>準備はよろしいですか？</p>
+            <div class="action-buttons">
+                <button class="next-button" style="background-color: #2ecc71; box-shadow: 0 3px #27ae60;" onclick="startAdventure()">冒険を始める！</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene1" class="scene">
+        <div class="dialogue-box">
+            <h2 class="game-font">冒険の序章 🌄</h2>
+            <p>深い眠りから覚めると、君は見たこともない世界の入り口に立っていた。</p>
+            <p>どこからか厳かな声が響く…「若き冒険者よ、よくぞ参った。君の未来を切り拓く壮大な旅が、今、幕を開ける！⚔️ <strong>インフラテック王国</strong>の門は、君のために開かれたのだ！」</p>
+            <p>この王国は、なんと<strong>60年以上</strong>もの長きにわたり、社会の礎を築き上げ 🏗️、人々の安全な生活を守り続けてきた、伝説と革新技術に彩られた地である。</p>
+            <div class="action-buttons">
+                <button class="next-button" onclick="showScene('scene2')">最初の試練へ ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene2" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">インフラテック王国 古代の碑文 📜</h2>
+            <p>王国の歴史を記す碑文にはこう刻まれている…「<strong>『全従業員の物心両面の幸福（しあわせ）😊を追求すると共に、インフラパーツの創造を通して、人類・社会に夢と感動を提供し続ける』</strong>これぞ我が王国の聖なる使命なり🔥。」</p>
+            <p>王国の主な営みは、道や橋、トンネルといった社会の大動脈を支える<strong>「インフラパーツ」（特殊コンクリート製品）</strong>の開発・製造・販売。
+                <button class="detail-button" onclick="toggleDetail('detail-infraparts')">🔍 詳細</button>
+            </p>
+            <div id="detail-infraparts" class="detail-content hidden">
+                <p><strong>インフラパーツとは？</strong><br>
+                道路の縁石、下水道管、擁壁ブロック、橋桁など、私たちの生活に不可欠なコンクリート製品のこと。インフラテックはこれらの高品質な製品で社会を力強く支えています！💪
+                </p>
+            </div>
+            <p>そしてそれらを用いた建築・土木工事である。</p>
+            <p>特に、秘術<strong>GRC（ガラス繊維補強コンクリート）</strong>から生み出される製品群は、土木建築分野で国内トップシェアを誇り、王国の技術力の象徴なのだ！🛡️
+                <button class="detail-button" onclick="toggleDetail('detail-grc')">🔍 GRCとは？</button>
+            </p>
+            <div id="detail-grc" class="detail-content hidden">
+                <p><strong>GRC（Glassfiber Reinforced Concrete）とは？</strong><br>
+                セメントにガラス繊維を混ぜて補強したコンクリート。従来のコンクリートより「軽くて丈夫」、そして「自由な形に加工しやすい」という特徴があります。建物の外壁や装飾、さらにはモニュメントなど、幅広い用途で活躍する魔法のような素材です！✨
+                </p>
+            </div>
+            <p>王国の経済規模はグループ全体で売上高<strong class="text-xl" id="salesValue">0億円</strong>💰、そして<strong class="text-xl" id="employeeCount">0名</strong>（2023年9月時点）の民がこの広大な王国で日夜、その技を振るっている。🧑‍🤝‍🧑</p>
+            <div class="action-buttons">
+                <button class="next-button" onclick="showScene('scene3')">冒険者ギルドへ ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene3" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">冒険者ギルド - 君の道を選べ 🗺️</h2>
+            <p>ギルドマスターの声が響く：「ようこそ、若き才能よ！王国では『総合職』として君を迎え、様々なクエスト（仕事）に挑戦する機会がある。君はどの道に心惹かれるかな？ 🤔」</p>
+            <div id="guildChoiceButtons" class="my-4 action-buttons">
+                <button class="choice-button" onclick="handleGuildChoice('tech')">🛠️ 技術を究める道</button>
+                <button class="choice-button" onclick="handleGuildChoice('sales')">🤝 人と社会を繋ぐ道</button>
+                <button class="choice-button" onclick="handleGuildChoice('craft')">🏭 モノづくりを支える道</button>
+            </div>
+
+            <div id="guildReaction" class="choice-reaction-text game-font hidden"></div>
+            
+            <div id="guildList" class="hidden">
+                <p class="mt-4">いずれの道を選ぼうとも、王国には多様な役割があるぞ：</p>
+                <ul class="list-disc list-inside item-list">
+                    <li><strong>販売営業の匠 🗣️:</strong> 王国の製品を各地に広め、顧客との信頼の絆を築く。 <button class="detail-button" onclick="toggleDetail('detail-role-sales')">🔍 役割詳細</button>
+                        <div id="detail-role-sales" class="detail-content hidden"><p>顧客のニーズを的確に捉え、最適な製品やソリューションを提案。高いコミュニケーション能力と課題解決能力が求められます。ルート営業だけでなく、新規開拓にも挑戦できます！</p></div>
+                    </li>
+                    <li><strong>技術営業の魔導士 💡 (SE):</strong> 専門知識で顧客の難題を解決へ導く。 <button class="detail-button" onclick="toggleDetail('detail-role-se')">🔍 役割詳細</button>
+                        <div id="detail-role-se" class="detail-content hidden"><p>製品の技術的な説明や導入支援、システム提案などを行います。深い製品知識と顧客の業務理解が重要。営業と技術の架け橋となる存在です！</p></div>
+                    </li>
+                    <li><strong>工場管理の鍛冶師 🔥:</strong> 製品生産の聖域を守り、品質を司る。 <button class="detail-button" onclick="toggleDetail('detail-role-factory')">🔍 役割詳細</button>
+                        <div id="detail-role-factory" class="detail-content hidden"><p>生産計画の立案、工程管理、品質管理、安全管理など、工場運営全般を担当。効率的で安全な生産体制を構築・維持する、モノづくりの心臓部です！</p></div>
+                    </li>
+                    <li><strong>設計の賢者 📐:</strong> 安全性と機能美を図面に描き出す。 <button class="detail-button" onclick="toggleDetail('detail-role-design')">🔍 役割詳細</button>
+                        <div id="detail-role-design" class="detail-content hidden"><p>顧客の要望や現地の状況に基づき、CAD等を用いて製品図面や施工図面を作成。構造計算や法的基準の知識も活かし、最適な設計を行います。</p></div>
+                    </li>
+                    <li><strong>開発の錬金術師 🧪:</strong> 新たな製品や素材を生み出す探求者。 <button class="detail-button" onclick="toggleDetail('detail-role-develop')">🔍 役割詳細</button>
+                        <div id="detail-role-develop" class="detail-content hidden"><p>市場のニーズや技術動向を調査し、新製品の企画・開発、既存製品の改良を行います。素材研究や試験・評価も重要な業務です。未来を創る仕事！</p></div>
+                    </li>
+                    <li><strong>施工管理の騎士団長 👷:</strong> 現場を指揮し、プロジェクトを成功に導く。 <button class="detail-button" onclick="toggleDetail('detail-role-construct')">🔍 役割詳細</button>
+                        <div id="detail-role-construct" class="detail-content hidden"><p>工事現場の「監督」として、安全・品質・工程・予算を管理。作業員や協力会社と連携し、計画通りに構造物を完成させる、達成感の大きな仕事です！</p></div>
+                    </li>
+                    <li><strong>システムエンジニアの守護者 💻:</strong> 王国の情報網を守り、円滑な運営を支える。 <button class="detail-button" onclick="toggleDetail('detail-role-it')">🔍 役割詳細</button>
+                        <div id="detail-role-it" class="detail-content hidden"><p>社内システムの開発・運用・保守、ネットワーク管理、セキュリティ対策など、企業のITインフラ全般をサポート。業務効率化にも貢献します。</p></div>
+                    </li>
+                </ul>
+                <p class="mt-4">これらの役割は、君の適性や希望を最大限尊重し、入社後1年間の<strong>「見習い期間」（研修期間）</strong>を経て、正式に配属されるのだ。🌟</p>
+                <div class="action-buttons">
+                    <button class="next-button" onclick="showScene('scene4')">報酬の巻物を見る ➡️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene4" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">報酬の巻物 - 勇気の対価 💰</h2>
+            <p>インフラテック王国では、君の働きと成長に応じて、正当な報酬と数々の恩恵が約束される。✨</p>
+            <p><strong>初任給の例 (2024年4月実績、月給、固定職種手当含む):</strong></p>
+            <ul class="list-disc list-inside item-list">
+                <li>大学院修了: <strong id="salary1">0円</strong> 🎓</li>
+                <li>大学・高専(専攻科)卒業: <strong id="salary2">0円</strong> 👨‍🎓👩‍🎓</li>
+                <li>短大・専門・高専(本科)卒業: <strong id="salary3">0円</strong> 🧑‍🎓</li>
+            </ul>
+            <p class="text-sm mt-2">(職種手当は固定残業20時間分に相当。超過した場合は別途支給されるので安心だ 👍)</p>
+            <p>さらに、冒険の拠点に応じて<strong>地域手当</strong><button class="detail-button" onclick="toggleDetail('detail-allowance-region')">🔍</button>（例：東京勤務なら月額35,000円！🗼）、<strong>資格手当</strong><button class="detail-button" onclick="toggleDetail('detail-allowance-qual')">🔍</button>🎖️、<strong>住宅手当</strong><button class="detail-button" onclick="toggleDetail('detail-allowance-housing')">🔍</button>🏡、<strong>家族手当</strong><button class="detail-button" onclick="toggleDetail('detail-allowance-family')">🔍</button>👨‍👩‍👧‍👦など、様々な支援魔法（手当）も用意されている。</p>
+            <div id="detail-allowance-region" class="detail-content hidden"><p><strong>地域手当:</strong> 勤務地によって生活費が異なることを考慮し、支給される手当です。例えば東京勤務の場合、月額35,000円が加算されます。</p></div>
+            <div id="detail-allowance-qual" class="detail-content hidden"><p><strong>資格手当:</strong> 業務に関連する特定の資格を取得すると、毎月手当が支給されます。自己成長の励みにもなりますね！</p></div>
+            <div id="detail-allowance-housing" class="detail-content hidden"><p><strong>住宅手当:</strong> 社員の住居に関する費用を一部補助する制度です。条件に応じて支給されます。</p></div>
+            <div id="detail-allowance-family" class="detail-content hidden"><p><strong>家族手当:</strong> 扶養家族がいる社員に対して支給される手当です。家族を大切にする王国ならではの制度です。</p></div>
+            <p>年に一度の<strong>昇給の儀式</strong>（6月）と、年に二度の<strong>ボーナス授与の祝祭</strong>（7月・12月、昨年度実績はなんと基本給の<strong>4カ月分</strong>！さらに業績次第では決算賞与も！🎉）は、君の努力を称える盛大なものとなるだろう。</p>
+            <div class="action-buttons">
+                <button class="next-button" onclick="showScene('scene5')">修行と成長の道へ ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene5" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">修行と成長の道 - そして癒やしの泉 ♨️</h2>
+            <p>王国では、君が真の勇者へと成長するための手厚いサポート体制が整えられている。🌱</p>
+            <p><strong>成長を促す試練 (研修制度):</strong>
+                 <button class="detail-button" onclick="toggleDetail('detail-training-main')">🔍 研修の全体像</button>
+            </p>
+             <div id="detail-training-main" class="detail-content hidden">
+                <p><strong>充実の研修プログラム！</strong><br>
+                インフラテックの研修は、新入社員一人ひとりの成長を長期的にサポートします。入社後1年間は、社会人としての基礎から専門知識まで、専任の指導官（先輩社員）がマンツーマンで丁寧に指導。OJT（On-the-Job Training）を軸に、階層別研修や職種別専門研修も充実。文系出身者も、未経験者も、安心してプロフェッショナルを目指せる環境がここにはあります！💪
+                </p>
+            </div>
+            <ul class="list-disc list-inside item-list">
+                <li><strong>新米冒険者訓練 (新入社員研修):</strong> 最初の1年間は、専任の指導官のもと、王国の知識と技をじっくりと学ぶ。文系出身の冒険者も安心して技を磨けるぞ。📖</li>
+                <li><strong>専門技能の道場 (技術・営業研修など):</strong> 各分野の専門性を高めるための高度な訓練が用意されている。⚔️</li>
+                <li><strong>自己啓発の魔法書 (通信教育制度):</strong> さらなる知識を求める者には、その学びの費用を王国が50%補助してくれる。📚</li>
+            </ul>
+            <p class="mt-4"><strong>癒やしの泉 (職場環境という名のオアシス):</strong>
+                 <button class="detail-button" onclick="toggleDetail('detail-worklife-main')">🏖️ ワークライフバランス</button>
+            </p>
+            <div id="detail-worklife-main" class="detail-content hidden">
+                 <p><strong>働きやすさもトップクラス！</strong><br>
+                    インフラテックは「全従業員の物心両面の幸福を追求する」という経営理念のもと、社員が心身ともに健康で、活き活きと働ける環境づくりを何よりも大切にしています。高い有給休暇取得率や、業界でもトップクラスの低い平均残業時間もその証。プライベートの時間をしっかりと確保し、趣味や家族との時間も大切にしながら、仕事で最高のパフォーマンスを発揮できる。そんな理想的な働き方が、インフラテックにはあります！😊
+                </p>
+            </div>
+            <ul class="list-disc list-inside item-list">
+                <li><strong>年間休日はたっぷり<span id="holidays">0</span>日</strong>、完全週休2日制だ。冒険には十分な休息が不可欠！😴</li>
+                <li>月平均残業時間は驚くほど少ない<strong><span id="overtime">0</span>時間</strong> (2023年度実績)。自分の時間を存分に楽しめる。趣味も充実！🎨</li>
+                <li>有給休暇の平均取得日数は<strong><span id="paidLeave">0</span>日</strong> (2023年度実績)。計画的に休暇を取得し、リフレッシュできる。✈️</li>
+                <li>2025年4月からは<strong>「奨学金返済支援の祝福」</strong>という新たな加護も始まる。学びの負担を軽減するありがたい制度だ。🙏</li>
+                <li>先輩冒険者たちの平均勤続年数は<strong>14.1年</strong>。そして、3年以内の新米冒険者の定着率は<strong>95.2%</strong>と非常に高く、多くの者が王国で長く活躍中だ！🥳</li>
+            </ul>
+            <div class="action-buttons">
+                <button class="next-button" onclick="showScene('scene6')">伝説の冒険者たちに会う ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene6" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">伝説の冒険者たち - 先輩たちの軌跡 🌟</h2>
+            <p>インフラテック王国には、全国各地の様々な学び舎（大学、高等専門学校、専門学校など）から、毎年多くの若き才能が、夢と希望を胸に集う。🏫</p>
+            <p>近年では、遠い異国から海を越えてやってくる<strong>グローバルな冒険者（海外大学出身者）</strong>の姿も増え<button class="detail-button" onclick="toggleDetail('detail-global')">🔍 国際的な取り組み</button>、王国の多様性はますます豊かになっているぞ。🌍</p>
+            <div id="detail-global" class="detail-content hidden"><p><strong>グローバルな視点も大切に！</strong><br>海外の大学を卒業された方の採用実績も着実に増えています。多様なバックグラウンドを持つ人材が集まることで、新たなイノベーションが生まれることを期待しています。語学力を活かせる場面や、将来的に海外と関わるチャンスも…？</p></div>
+            <p><strong>近年の新米冒険者たちの構成（男女別）:</strong><button class="detail-button" onclick="toggleDetail('detail-diversity')">🔍 多様性への考え方</button></p>
+            <div id="detail-diversity" class="detail-content hidden"><p><strong>ダイバーシティ＆インクルージョン</strong><br>インフラテックでは、性別や国籍、経歴に関わらず、全ての社員がその能力を最大限に発揮し、安心して働き続けられる環境づくりを推進しています。女性活躍推進にも力を入れており、誰もが輝ける職場を目指しています。</p></div>
+            <ul class="list-disc list-inside item-list">
+                <li>2024年度入国: 男性14名, 女性9名</li>
+                <li>2023年度入国: 男性11名, 女性9名</li>
+                <li>2022年度入国: 男性12名, 女性5名</li>
+            </ul>
+            <p>性別や出身に関わらず、誰もが英雄になれるチャンスが、この王国には満ち溢れているのだ！🌈</p>
+            
+            <div class="bard-story">
+                <p class="game-font text-yellow-300">どこからか陽気なリュートの音色が聞こえる…♪</p>
+                <p>「やあ、若き冒険者！王国での暮らしはどうだい？俺は吟遊詩人。この国の冒険者たちの『ありのままの日常』を絵物語にして、世界に伝えているのさ。先輩たちの普段の顔や、王国のイベントの様子、覗いてみないかい？面白い発見があるかもよ？」</p>
+            </div>
+
+            <div class="action-buttons">
+                <a href="https://www.instagram.com/infratec_recruit/" target="_blank" class="choice-button" style="background-color: #e67e22; box-shadow: 0 3px #d35400;">吟遊詩人の絵物語を見る 📸</a>
+                <button class="next-button" onclick="showScene('scene7')">最終試練（選考）へ挑む ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene7" class="scene">
+         <div class="dialogue-box fade-in">
+            <h2 class="game-font">最終試練 - 王国への扉を開く鍵 🔑</h2>
+            <p>インフラテック王国の一員となるための最終試練は、君の都合を最大限に尊重し、柔軟に進められるぞ。🤝</p>
+            <p>最終関門に挑む前に、君がこの冒険で得た知識を確かめさせてくれ。</p>
+
+            <div id="quizContainer" class="quiz-container">
+                <p class="game-font text-lg">【王国クイズ】<br>インフラテック王国が誇る、軽くて丈夫な魔法の素材の名前は何かな？</p>
+                <div id="quizChoices" class="mt-4">
+                    <button class="choice-button" onclick="checkAnswer('ABC')">A. ABC (すごいコンクリート)</button>
+                    <button class="choice-button" onclick="checkAnswer('GRC')">B. GRC (ガラス繊維補強コンクリート)</button>
+                    <button class="choice-button" onclick="checkAnswer('XYZ')">C. XYZ (謎の金属)</button>
+                </div>
+                <div id="quizFeedback" class="quiz-feedback hidden"></div>
+            </div>
+
+            <div id="finalLinks" class="hidden mt-4">
+                <p>見事だ！君こそ王国にふさわしい冒険者だ！さあ、王国の門を叩くのだ！🚪</p>
+                <p>まずは<strong>「冒険者登録」（マイナビからのエントリー）</strong><button class="detail-button" onclick="toggleDetail('detail-entry-final')">🔍 エントリーの流れ</button>を行い、我々に声をかけてくれ！</p>
+                <div id="detail-entry-final" class="detail-content hidden"><p><strong>エントリー後のステップ(例)</strong><br>1. マイナビよりエントリーシート提出<br>2. 書類選考<br>3. WEB適性検査 (SPIなど)<br>4. 個別面談 (通常2～3回、WEBまたは対面)<br>5. 内々定！<br>あなたのペースに合わせて進められますのでご安心を。</p></div>
+
+                <p>その後、<strong>「賢者との遠隔対話」（WEB個別面談会、Zoomを使用）</strong><button class="detail-button" onclick="toggleDetail('detail-interview-final')">🔍 面談のポイント</button>が待っている。これは君のスケジュールに合わせて日程が調整される特別な機会だ。場所を選ばず、どこからでも試練に臨めるぞ。💻</p>
+                <div id="detail-interview-final" class="detail-content hidden"><p><strong>面談成功の秘訣</strong><br>リラックスして、ありのままのあなたを見せてください！「なぜインフラテックなのか」「何に挑戦したいか」など、あなたの熱い想いを伝えることが大切です。私たちもあなたのことを深く知りたいと思っています。質問も大歓迎ですよ！</p></div>
+
+                <p>さあ、勇気を出してその一歩を踏み出すのだ！君の挑戦を、王国は心から歓迎するぞ！💖</p>
+                <div class="action-buttons">
+                     <a href="https://job.mynavi.jp/27/pc/search/corp82951/outline.html" target="_blank" class="choice-button">マイナビの巻物で詳細確認 📖</a>
+                    <button class="next-button" onclick="showScene('scene8')">冒険の結末、そして未来へ ➡️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="scene8" class="scene">
+        <div class="dialogue-box fade-in">
+            <h2 class="game-font">君自身の伝説を刻め！ 🚀</h2>
+            <p>インフラテック王国での冒険は、君自身の成長と挑戦の物語そのものだ。🌟</p>
+            <p class="text-yellow-300 text-lg my-3"><strong>「既存の常識やこれまでの自分を飛び越えて挑戦し続ける歴史が、現在のインフラテックを築いてきた」</strong></p>
+            <p>この王国の精神を胸に、君もまた、新たな歴史を刻む一人となってみないか？ ✒️</p>
+            <p>揺るぎない安定した基盤、温かく迎え入れてくれる仲間たち、そして無限に広がる可能性が、君の訪れを待っている！ 🤗</p>
+            <div class="action-buttons">
+                <a href="https://job.mynavi.jp/27/pc/search/corp82951/outline.html" target="_blank" class="next-button" style="background-color: #27ae60; box-shadow: 0 4px #229954; display: inline-block; text-decoration: none;">いざ、インフラテック王国へ！ 🏰</a>
+                <button class="choice-button" style="background-color:#7f8c8d; box-shadow: 0 4px #626567;" onclick="showScene('scene0')">冒険の書を閉じる 📕</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentScene = 0;
+    const totalScenes = 8;
+    const bgMusic = document.getElementById('backgroundMusic');
+    const playPauseButton = document.getElementById('playPauseButton');
+    const volumeSlider = document.getElementById('volumeSlider');
+    let musicStarted = false;
+
+    const kingdomData = {
+        sales: 409,
+        employees: 1162,
+        salary: { g: 259463, u: 248594, j: 234025 },
+        workLife: { holidays: 125, overtime: 6.9, paidLeave: 11.2 }
+    };
+
+    function animateValue(element, start, end, duration, suffix = '', isFloat = false) {
+        if (!element) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            let currentValue = progress * (end - start) + start;
+            if (isFloat) {
+                element.innerHTML = currentValue.toFixed(1) + suffix;
+            } else {
+                element.innerHTML = Math.floor(currentValue).toLocaleString() + suffix;
+            }
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function updateProgressBar() {
+        const progressBar = document.getElementById('progressBar');
+        const progress = currentScene > 0 ? ((currentScene) / totalScenes) * 100 : 0;
+        progressBar.style.width = progress + '%';
+        if (currentScene === 0) {
+            progressBar.textContent = `冒険の準備中...`;
+        } else {
+            progressBar.textContent = `冒険の進行度: ${Math.round(progress)}%`;
+        }
+    }
+    
+    function startAdventure() {
+        if (bgMusic && !musicStarted) {
+            bgMusic.play().then(() => {
+                musicStarted = true;
+                if(playPauseButton) playPauseButton.textContent = '⏸️';
+            }).catch(error => {
+                console.warn("BGMの再生に失敗しました。ユーザー操作が必要です。", error);
+                if(playPauseButton && bgMusic.paused) playPauseButton.textContent = '▶️';
+            });
+        }
+        showScene('scene1');
+    }
+
+    function showScene(sceneId) {
+        document.querySelectorAll('.scene').forEach(scene => {
+            scene.classList.remove('active');
+        });
+        const nextSceneElement = document.getElementById(sceneId);
+        if (nextSceneElement) {
+            nextSceneElement.classList.remove('fade-in');
+            void nextSceneElement.offsetWidth;
+            nextSceneElement.classList.add('active', 'fade-in');
+            
+            const sceneNumber = parseInt(sceneId.replace('scene', ''));
+            if (!isNaN(sceneNumber)) {
+                currentScene = sceneNumber;
+            }
+            updateProgressBar();
+            window.scrollTo(0, 0);
+
+            if (sceneId === 'scene2') {
+                animateValue(document.getElementById('salesValue'), 0, kingdomData.sales, 1500, '億円');
+                animateValue(document.getElementById('employeeCount'), 0, kingdomData.employees, 1500, '名');
+            }
+            if (sceneId === 'scene4') {
+                animateValue(document.getElementById('salary1'), 0, kingdomData.salary.g, 1500, '円');
+                animateValue(document.getElementById('salary2'), 0, kingdomData.salary.u, 1500, '円');
+                animateValue(document.getElementById('salary3'), 0, kingdomData.salary.j, 1500, '円');
+            }
+            if (sceneId === 'scene5') {
+                 animateValue(document.getElementById('holidays'), 0, kingdomData.workLife.holidays, 1500, '');
+                 animateValue(document.getElementById('overtime'), 0, kingdomData.workLife.overtime, 1500, '', true);
+                 animateValue(document.getElementById('paidLeave'), 0, kingdomData.workLife.paidLeave, 1500, '', true);
+            }
+        }
+    }
+
+    function handleGuildChoice(choice) {
+        const reactionTextElement = document.getElementById('guildReaction');
+        const guildListElement = document.getElementById('guildList');
+        const choiceButtonsElement = document.getElementById('guildChoiceButtons');
+        let reactionMessage = '';
+        if (choice === 'tech') {
+            reactionMessage = "「ほう、🛠️ 技術を究める道か！設計の賢者や開発の錬金術師として、最先端の技術に触れることができるぞ。素晴らしい選択だ！」";
+        } else if (choice === 'sales') {
+            reactionMessage = "「🤝 人と社会を繋ぐ道、それもまた尊い！販売や技術営業として、王国の顔となり多くの者と絆を築くのだな！」";
+        } else if (choice === 'craft') {
+            reactionMessage = "「🏭 モノづくりこそ王国の礎！工場管理や施工管理として、確かな品質と安全を守り抜くのだな！頼もしいぞ！」";
+        }
+
+        reactionTextElement.textContent = reactionMessage;
+        reactionTextElement.classList.remove('hidden');
+        choiceButtonsElement.style.display = 'none';
+        guildListElement.classList.remove('hidden');
+        guildListElement.classList.remove('fade-in');
+        void guildListElement.offsetWidth;
+        guildListElement.classList.add('fade-in');
+    }
+
+    function checkAnswer(answer) {
+        const feedbackEl = document.getElementById('quizFeedback');
+        const choicesEl = document.getElementById('quizChoices');
+        const finalLinksEl = document.getElementById('finalLinks');
+        
+        feedbackEl.classList.remove('hidden');
+        if (answer === 'GRC') {
+            feedbackEl.textContent = '正解！さすがだ！君こそ王国にふさわしい冒険者だ！';
+            feedbackEl.className = 'quiz-feedback correct game-font';
+            choicesEl.style.display = 'none';
+            finalLinksEl.classList.remove('hidden');
+            finalLinksEl.classList.add('fade-in');
+        } else {
+            feedbackEl.textContent = 'むむ、惜しい！碑文の内容を思い出してみるのだ！';
+            feedbackEl.className = 'quiz-feedback incorrect game-font';
+        }
+    }
+
+    function toggleDetail(detailId) {
+        const detailElement = document.getElementById(detailId);
+        if (detailElement) {
+            const isHidden = detailElement.classList.contains('hidden');
+            detailElement.closest('.dialogue-box').querySelectorAll('.detail-content').forEach(el => {
+                if (el.id !== detailId) {
+                    el.classList.add('hidden');
+                }
+            });
+
+            detailElement.classList.toggle('hidden');
+            if (!detailElement.classList.contains('hidden')) {
+                detailElement.classList.remove('fade-in');
+                void detailElement.offsetWidth;
+                detailElement.classList.add('fade-in');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateProgressBar(); 
+        if (playPauseButton && bgMusic) {
+            playPauseButton.addEventListener('click', () => {
+                if (!musicStarted || bgMusic.paused) {
+                    bgMusic.play().then(() => {
+                        musicStarted = true;
+                        playPauseButton.textContent = '⏸️';
+                    }).catch(error => {
+                         console.warn("BGMの再生に失敗しました。", error);
+                         playPauseButton.textContent = '▶️';
+                    });
+                } else {
+                    bgMusic.pause();
+                    playPauseButton.textContent = '▶️';
+                }
+            });
+        }
+        if (volumeSlider && bgMusic) {
+            bgMusic.volume = parseFloat(volumeSlider.value);
+            volumeSlider.addEventListener('input', () => {
+                if (bgMusic) {
+                    bgMusic.volume = parseFloat(volumeSlider.value);
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
